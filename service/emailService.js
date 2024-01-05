@@ -1,14 +1,14 @@
-// emailService.js
 import nodemailer from 'nodemailer';
 import ConfirmationCode from '../models/ConfirmationCodeModel.js';
 import bcrypt from 'bcryptjs';
+import User from '../models/UserModel.js';
 
 
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
-    user: 'zvyagin121212@gmail.com',
-    pass: 'bqqwnyuvwpgfvmda',
+    user: 'animalpethelper@gmail.com',
+    pass: 'phizwccubqkwueaf',
   },
   tls: {
     rejectUnauthorized: false,
@@ -51,7 +51,8 @@ export const sendConfirmationCode = async (email) =>  {
             code: hashedCode,
             expirationTime: new Date(expirationTime),
           });
-          
+          console.log('Confirmation Code Timestamp:', confirmationCode.timestamp); // Вывод в консоль
+
           try {
             await confirmationCode.save();
             console.log('Confirmation code saved to the database');
@@ -63,5 +64,25 @@ export const sendConfirmationCode = async (email) =>  {
         }
       });
     });
-  };
-  
+};
+
+export const resendConfirmationCode = async (email) => {
+  try {
+    // Проверяем наличие email в базе данных
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error('User not found with the provided email');
+    }
+
+    // Добавляем задержку перед повторной отправкой кода 
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Отправляем новый код подтверждения
+    const confirmationCode = await sendConfirmationCode(email);
+    console.log('Resending confirmation code to:', email);
+    return confirmationCode;
+  } catch (error) {
+    console.error('Error in resendConfirmationCode:', error);
+    throw error;
+  }
+};
